@@ -1,0 +1,33 @@
+{% comment %}
+  Recently Viewed Products Snippet
+
+  This snippet is rendered by the 'recently-viewed-products' section.
+  It contains the logic and markup for displaying recently viewed products
+  using a Custom Element and a carousel.
+
+  Passed variables from the section:
+  - title: The section title
+  - subtitle: The section subtitle
+  - max_products: Maximum number of products to display
+{% endcomment %}
+
+{# Zeige Titel und Untertitel an, die von der Section übergeben wurden #}
+{% if title != blank %}
+  <h2>{{ title }}</h2>
+{% endif %}
+{% if subtitle != blank %}
+  <p>{{ subtitle }}</p>
+{% endif %}
+
+{# Hier wird der Container für das Custom Element und das Karussell sein #}
+<div id="recently-viewed-products-container">
+  {% comment %}
+    Das Custom Element wird hier dynamisch von JavaScript erstellt und eingefügt.
+    Oder füge hier direkt das HTML-Tag vom Custom Elements ein,
+    und mein JavaScript registriert und initialisiert es.
+  {% endcomment %}
+
+   {# Füge das Custom Element Tag temporär ein zum Testen #}
+    <recently-viewed-products data-max-products="{{ max_products }}"></recently-viewed-products>
+
+</div>

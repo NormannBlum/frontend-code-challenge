@@ -372,5 +372,48 @@
     {%- if settings.cart_type == 'drawer' -%}
       <script src="{{ 'cart-drawer.js' | asset_url }}" defer="defer"></script>
     {%- endif -%}
+
+ <script src="{{ 'recently-viewed-products.js' | asset_url }}" defer="defer"></script>
+
+    {% comment %}
+      Tracking-Skript für "Recently Viewed Products".
+      Wird nur gerendert und ausgeführt auf Produktseiten, wenn ein Produktobjekt vorhanden ist.
+    {% endcomment %}
+    {% if template.name == 'product' and product %}
+      <script>
+        console.log('🗑️ Product page inline script started.'); // Dieser Log erscheint nur auf Produktseiten
+
+        function initializeProductTracking() {
+          console.log('🗑️ initializeProductTracking called.');
+          const currentProductHandle = "{{ product.handle | escape }}";
+          console.log('🗑️ Product Handle:', currentProductHandle);
+
+          // Prüfen, ob die Funktion aus recently-viewed-products.js verfügbar ist
+          if (typeof addRecentlyViewedProduct === 'function') {
+            if (currentProductHandle && currentProductHandle !== '' && currentProductHandle !== 'null') {
+              console.log('🗑️ Calling addRecentlyViewedProduct for handle:', currentProductHandle);
+              addRecentlyViewedProduct(currentProductHandle, 10); // 10 ist die max. Anzahl an Produkten
+            } else {
+              console.warn('🗑️ Invalid or missing product handle for tracking:', currentProductHandle);
+            }
+          } else {
+            // Dieser Fall sollte selten sein, wenn recently-viewed-products.js korrekt mit defer geladen wird.
+            // Es deutet auf ein grundlegendes Problem mit dem Laden/Timing des Skripts hin.
+            console.warn('🗑️ addRecentlyViewedProduct function is NOT defined. Check that recently-viewed-products.js is loaded before this script runs and defines the function.');
+          }
+        }
+
+        // Stelle sicher, dass das DOM bereit ist, bevor du versuchst, die Funktion aufzurufen
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initializeProductTracking);
+        } else {
+          // DOMContentLoaded wurde bereits ausgelöst
+          initializeProductTracking();
+        }
+      </script>
+    {% endif %}
+
+  </body>
+</html>
   </body>
 </html>
