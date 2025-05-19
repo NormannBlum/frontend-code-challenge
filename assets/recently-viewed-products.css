@@ -1,0 +1,136 @@
+/* assets/recently-viewed-products.css */
+
+/* Basis-Container des Custom Elements, optionales Padding/Margin */
+recently-viewed-products {
+    display: block;
+    /* Custom Elements sind standardm\u00E4\u00DFig inline, setze auf block */
+    margin: 20px 0;
+    padding: 0 15px;
+    /* F\u00FCr Swiper Pfeile am Rand, wenn overflow: hidden */
+}
+
+/* Standard Swiper Container */
+.recently-viewed-products-swiper {
+    width: 100%;
+    /* Das Karussell soll die gesamte Breite einnehmen */
+    height: auto;
+    /* Die H\u00F6he passt sich dem Inhalt an */
+    overflow: hidden;
+    /* Versteckt Inhalte au\u00DFerhalb des Karussells */
+    position: relative;
+    /* Wichtig f\u00FCr absolute Positionierung von Pfeilen/Pagination */
+}
+
+/* Wrapper f\u00FCr die Slides */
+.swiper-wrapper {
+    display: flex;
+    /* Swiper nutzt Flexbox */
+    box-sizing: content-box;
+    /* F\u00FCr korrekte Breitenberechnung mit padding */
+}
+
+/* Einzelne Produkt-Slide */
+.recently-viewed-product-slide {
+    width: 250px;
+    /* Beispiel: Feste Breite f\u00FCr einen Slide */
+    flex-shrink: 0;
+    /* Verhindert Schrumpfen */
+    /* Oder f\u00FCr variable Breiten (wenn slidesPerView: 'auto'): */
+    /* width: auto; */
+    margin-right: 20px;
+    /* Passt zum spaceBetween in Swiper Optionen */
+
+    /* Stil f\u00FCr den Slide-Inhalt */
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+    /* Verhindert, dass Bilder \u00FCber den Rand ragen */
+    text-align: center;
+    box-sizing: border-box;
+    /* Stellt sicher, dass padding/border in die Breite passt */
+}
+
+/* Inhalt des Produkt-Items */
+.recently-viewed-product-content {
+    padding: 10px;
+}
+
+/* Produktbild */
+.recently-viewed-product-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    /* Entfernt zus\u00E4tzlichen Platz unter Bildern */
+    margin-bottom: 10px;
+}
+
+.recently-viewed-product-image.placeholder-image {
+    background-color: #f0f0f0;
+    height: 150px;
+    /* Platzhalterh\u00F6he */
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 0.8em;
+    margin-bottom: 10px;
+}
+
+/* Produkttitel */
+.recently-viewed-product-title {
+    font-size: 1.2em;
+    margin: 0 0 5px 0;
+    line-height: 1.2;
+    min-height: 2.4em;
+    /* Sorgt f\u00FCr gleichm\u00E4\u00DFige H\u00F6he bei Titeln */
+}
+
+/* Produktpreis */
+.recently-viewed-product-price {
+    font-size: 1em;
+    color: #333;
+    margin: 0;
+}
+
+/* Link-Stil */
+.recently-viewed-product-link {
+    text-decoration: none;
+    color: inherit;
+    /* Vererbt Textfarbe */
+    display: block;
+    /* Macht den Link-Bereich anklickbar */
+}
+
+
+/* Swiper Navigation Pfeile (Standard CSS wird vom CDN geliefert, aber hier f\u00FCr \u00C4nderungen) */
+.swiper-button-prev,
+.swiper-button-next {
+    color: #000;
+    /* Farbe der Pfeile anpassen */
+    top: 50%;
+    /* Vertikale Positionierung */
+    transform: translateY(-50%);
+}
+
+/* Swiper Pagination Dots */
+.swiper-pagination-bullet {
+    background-color: #ccc;
+    /* Farbe der inaktiven Dots */
+    opacity: 1;
+}
+
+.swiper-pagination-bullet-active {
+    background-color: #000;
+    /* Farbe der aktiven Dots */
+}
+
+/* Responsivit\u00E4t f\u00FCr Slides per View - wichtig, wenn slidesPerView in JS auf 'auto' gesetzt ist */
+/* Dies ist nur eine Beispiel-Anpassung, du musst deine eigenen Breakpoints verwenden */
+@media (max-width: 639px) {
+    .recently-viewed-product-slide {
+        width: 80%;
+        /* Mobil: nur ein Produkt mit mehr Abstand */
+        margin-right: 15px;
+    }
+}

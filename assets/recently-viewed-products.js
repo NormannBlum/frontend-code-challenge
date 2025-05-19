@@ -213,7 +213,7 @@ class RecentlyViewedProducts extends HTMLElement {
 
   /**
    * Renders the fetched product data into the Custom Element's DOM.
-   * This method should also initialize the carousel library.
+   * This method should also initialize the carousel library (Swiper).
    *
    * @param {Array<object>} products - An array of product data objects.
    */
@@ -235,22 +235,22 @@ class RecentlyViewedProducts extends HTMLElement {
     let carouselHtml = `
       <div class="swiper recently-viewed-products-swiper"> {# Haupt-Swiper-Container #}
         <div class="swiper-wrapper"> {# Wrapper für die Slides #}
-          {# Die einzelnen Produkt-Slides werden hier dynamisch eingefügt #}
+          {# Die einzelnen Produkt-Slides werden hier dynamisch eingef\u00FCgt #}
         </div>
-        {# Optional: Pagination Dots - Füge diese Elemente außerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
+        {# Optional: Pagination Dots - F\u00FCge diese Elemente au\u00DFerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
         <div class="swiper-pagination"></div>
-        {# Optional: Navigation Pfeile - Füge diese Elemente außerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
+        {# Optional: Navigation Pfeile - F\u00FCge diese Elemente au\u00DFerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
         <div class="swiper-button-prev"></div>
         <div class="swiper-button-next"></div>
-        {# Optional: Scrollbar - Füge dieses Element außerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
+        {# Optional: Scrollbar - F\u00FCge dieses Element au\u00DFerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
         <div class="swiper-scrollbar"></div>
       </div>
     `;
 
-    // Füge das Grundgerüst in das Custom Element ein
+    // F\u00FCge das Grundger\u00FCst in das Custom Element ein
     this.innerHTML = carouselHtml;
 
-    // Finde den Swiper Wrapper im DOM deines Custom Elements, da wir die Slides dort einfügen
+    // Finde den Swiper Wrapper im DOM deines Custom Elements, da wir die Slides dort einf\u00FCgen
     const swiperWrapper = this.querySelector('.swiper-wrapper');
 
     if (!swiperWrapper) {
@@ -259,53 +259,59 @@ class RecentlyViewedProducts extends HTMLElement {
       return; // Beende, wenn der Wrapper fehlt
     }
 
+    // --- F\u00DCGE DIE PRODUKTE ALS SWIPER SLIDES HINZU ---
     let productSlidesHtml = '';
-
     products.forEach((product) => {
-      // Erstelle das HTML für ein einzelnes Produkt als Swiper Slide
+      // Erstelle das HTML f\u00FCr ein einzelnes Produkt als Swiper Slide
+      // Passe die Struktur und CSS-Klassen an dein gew\u00FCnschtes Design und die Swiper-Anforderungen an!
       productSlidesHtml += `
-          <div class="swiper-slide recently-viewed-product-slide">
-            <div class="recently-viewed-product-content"> {# Container für das Produkt-Item #}
-              <a href="/products/${product.handle}" class="recently-viewed-product-link">
-                ${
-                  product.featured_image
-                    ? `<img class="recently-viewed-product-image" src="<span class="math-inline">\{product\.featured\_image\}"
-alt\="</span>{product.title || 'Produktbild'}"
-                        loading="lazy">`
-                    : '<div class="recently-viewed-product-image placeholder-image"></div>'
-                }
-                <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
-                ${
-                  product.price !== undefined && product.currency
-                    ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)} ${
-                        product.currency
-                      }</p>`
-                    : ''
-                }
-              </a>
-              {# F\u00FCge hier optional einen "Jetzt kaufen" Button oder \u00C4hnliches hinzu #}
-              {# <button class="button">Jetzt kaufen</button> #}
-            </div>
+        <div class="swiper-slide recently-viewed-product-slide"> {# Jedes Produkt ist eine Swiper Slide #}
+          <div class="recently-viewed-product-content"> {# Container f\u00FCr das Produkt-Item #}
+            <a href="/products/${product.handle}" class="recently-viewed-product-link">
+              ${
+                product.featured_image
+                  ? `<img src="${product.featured_image}"
+                      alt="${product.title || 'Produktbild'}" {# alt Text hinzuf\u00FCgen, auch wenn Titel fehlt #}
+                      loading="lazy" {# Gutes Praxis f\u00FCr Bilder au\u00DFerhalb des Viewports #}
+                      width="150" {# Beispielgr\u00F6\u00DFe, passe sie an dein Design an #}
+                      height="150">`
+                  : '<div class="placeholder-image"></div>'
+              }
+              <h3 class="recently-viewed-product-title">${
+                product.title || 'Unbenanntes Produkt'
+              }</h3> {# Titel anzeigen, Platzhalter falls fehlt #}
+              {# Preisformatierung in JS #}
+              ${
+                product.price !== undefined && product.currency
+                  ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)} ${
+                      product.currency
+                    }</p>`
+                  : ''
+              }
+            </a>
+            {# F\u00FCge hier optional einen "Jetzt kaufen" Button oder \u00C4hnliches hinzu #}
+            {# <button class="button">Jetzt kaufen</button> #}
           </div>
-        `;
+        </div>
+      `;
     });
 
-    // Füge die generierten Slides in den Swiper Wrapper ein
+    // F\u00FCge die generierten Slides in den Swiper Wrapper ein
     swiperWrapper.innerHTML = productSlidesHtml;
 
-    console.log('[RVP] renderProducts: Produktdaten als Swiper Slides in Wrapper eingefügt.');
+    console.log('[RVP] renderProducts: Produktdaten als Swiper Slides in Wrapper eingef\u00FCgt.');
 
     // --- INITIALISIERE SWIPER ---
     // Suche das Haupt-Swiper-Element im DOM deines Custom Elements
     const swiperElement = this.querySelector('.recently-viewed-products-swiper');
 
     if (swiperElement && typeof Swiper !== 'undefined') {
-      // Prüfe, ob Swiper JS geladen ist
+      // Pr\u00FCfe, ob Swiper JS geladen ist
       console.log('[RVP] renderProducts: Swiper Element gefunden, initialisiere Swiper.');
       // Initialisiere Swiper mit Optionen
       // Passe die Optionen an, um das Verhalten deines Karussells zu steuern!
       const mySwiper = new Swiper(swiperElement, {
-        // Beispiel-Optionen (passe diese an deine Bedürfnisse an!)
+        // Beispiel-Optionen (passe diese an deine Bed\u00FCrfnisse an!)
         slidesPerView: 'auto', // Zeigt so viele Slides wie reinpassen
         spaceBetween: 20, // Abstand zwischen den Slides (in px)
         loop: false, // Endloses Scrollen (optional)
@@ -319,7 +325,7 @@ alt\="</span>{product.title || 'Produktbild'}"
           el: '.swiper-pagination',
           clickable: true, // Macht die Dots klickbar
         },
-        // Füge hier weitere Swiper Optionen hinzu (Responsivität, etc.)
+        // F\u00FCge hier weitere Swiper Optionen hinzu (Responsivit\u00E4t, etc.)
         // Siehe Swiper API Dokumentation f\u00FCr alle Optionen: https://swiperjs.com/api/
         // Responsive Breakpoints sind wichtig f\u00FCr verschiedene Ger\u00E4tegr\u00F6\u00DFen
         breakpoints: {

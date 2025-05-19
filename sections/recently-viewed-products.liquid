@@ -1,60 +1,58 @@
-{% comment %}
+{% comment %} 
   Recently viewed products section
-
+ 
   This section file defines a reusable section for the Shopify Theme Editor
   that allows merchants to configure a block for displaying products
   that the customer has recently viewed.
-
+ 
   It primarily uses a Liquid snippet ('recently-viewed-products') to render
   the actual product list and carousel.
-
-  Configuration settings (defined in the schema) are passed to the snippet.
+ 
+  Configuration settings (defined in the schema) are passed to the snippet. 
 {% endcomment %}
 
 <div class="page-width">
-  {#
-    Render the 'recently-viewed-products' snippet.
-    The actual logic for fetching and displaying recently viewed products
-    will be handled within this snippet.
-    Section settings are passed as arguments to the snippet.
-  #}
-  {% render 'recently-viewed-products',
-    title: section.settings.title,
-    subtitle: section.settings.subtitle,
-    max_products: section.settings.max_products
+
+  {% render 'recently-viewed-products'
+    ,
+ title: section.settings.title
+    ,
+ subtitle: section.settings.subtitle
+    ,
+ max_products: section.settings.max_products
   %}
 </div>
 
 {% schema %}
-{
-  "name": "Recently viewed products",
-  "tag": "section",
-  "class": "section-recently-viewed-products",
-  "settings": [
-    {
-      "type": "text",
-      "id": "title",
-      "label": "Überschrift",
-      "default": "Kürzlich angesehene Produkte"
-    },
-    {
-      "type": "text",
-      "id": "subtitle",
-      "label": "Untertitel",
-      "default": "Basierend auf deinem Browserverlauf"
-    },
-    {
-      "type": "number",
-      "id": "max_products",
-      "label": "Max Produkte",
-      "default": 4
-    }
-  ],
-  "presets": [
-    {
-      "name": "Recently viewed products",
-      "category": "Product"
-    }
-  ]
-}
+  {
+    "name": "Recently viewed products",
+    "tag": "section",
+    "class": "section-recently-viewed-products",
+    "settings": [
+      {
+        "type": "text",
+        "id": "title",
+        "label": "Überschrift",
+        "default": "Kürzlich angesehene Produkte"
+      },
+      {
+        "type": "text",
+        "id": "subtitle",
+        "label": "Untertitel",
+        "default": "Basierend auf deinem Browserverlauf"
+      },
+      {
+        "type": "number",
+        "id": "max_products",
+        "label": "Max Produkte",
+        "default": 4
+      }
+    ],
+    "presets": [
+      {
+        "name": "Recently viewed products",
+        "category": "Product"
+      }
+    ]
+  }
 {% endschema %}
