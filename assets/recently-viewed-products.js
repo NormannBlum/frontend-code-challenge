@@ -219,66 +219,139 @@ class RecentlyViewedProducts extends HTMLElement {
    */
   renderProducts(products) {
     console.log('[RVP] renderProducts: Rendere Produkte.', products);
-    // TODO: Implementiere das Rendern der Produkte und die Karussell-Logik hier
 
-    if (products.length > 0) {
-      // Entferne vorherigen Inhalt (z.B. Platzhalter oder Lade-Indikator)
-      this.innerHTML = '';
+    // Zeige eine Meldung an, wenn keine Produkte zum Anzeigen vorhanden sind
+    if (!products || products.length === 0) {
+      this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>'; // Oder eine andere geeignete Meldung
+      console.log('[RVP] renderProducts: Keine Produkte zum Anzeigen gefunden.');
+      return; // Beende die Funktion, wenn keine Produkte da sind
+    }
 
-      // Hier erstellst du das HTML-Markup für das Karussell und jedes Produkt
-      // Die Struktur hängt von deiner gewählten Karussell-Bibliothek ab!
-      let carouselHtml = '<div class="recently-viewed-products-carousel-container">'; // Ein Container für das Karussell
+    // Entferne vorherigen Inhalt (z.B. Platzhalter oder Lade-Indikator, oder vorherige Produktliste)
+    this.innerHTML = '';
 
-      // Beispielhafte Produkt-Rendering-Schleife (Passe dies an deine Bedürfnisse an!)
-      products.forEach((product) => {
-        // Erstelle das HTML für ein einzelnes Produkt im Karussell-Item
-        carouselHtml += `
-          <div class="recently-viewed-product-item">
-            <a href="/products/${product.handle}">
-              ${
-                product.featured_image
-                  ? `<img src="${product.featured_image}" alt="${product.title}" loading="lazy" width="150" height="150">`
-                  : '<div class="placeholder-image"></div>'
-              }
-              <h3>${product.title}</h3>
-              <p>${
-                product.price / 100
-              } {{ shop.money_format }}</p> {# Preis ist in Cent, shop.money_format ist ein Liquid Tag, das hier nicht direkt geht, muss per JS formatiert oder von anderer Stelle geholt werden #}
-              {# Bessere Preisformatierung in JS: product.price / 100 + ' ' + product.currency #}
-              ${product.price / 100} ${product.currency}
-            </a>
+    // --- ERSTELLE DAS HTML-MARKUP FÜR SWIPER ---
+    // Die Struktur folgt der Swiper Dokumentation: .swiper > .swiper-wrapper > .swiper-slide
+    let carouselHtml = `
+      <div class="swiper recently-viewed-products-swiper"> {# Haupt-Swiper-Container #}
+        <div class="swiper-wrapper"> {# Wrapper für die Slides #}
+          {# Die einzelnen Produkt-Slides werden hier dynamisch eingefügt #}
+        </div>
+        {# Optional: Pagination Dots - Füge diese Elemente außerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
+        <div class="swiper-pagination"></div>
+        {# Optional: Navigation Pfeile - Füge diese Elemente außerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+        {# Optional: Scrollbar - Füge dieses Element außerhalb des swiper-wrapper aber innerhalb des swiper Containers hinzu #}
+        <div class="swiper-scrollbar"></div>
+      </div>
+    `;
+
+    // Füge das Grundgerüst in das Custom Element ein
+    this.innerHTML = carouselHtml;
+
+    // Finde den Swiper Wrapper im DOM deines Custom Elements, da wir die Slides dort einfügen
+    const swiperWrapper = this.querySelector('.swiper-wrapper');
+
+    if (!swiperWrapper) {
+      console.error('[RVP] renderProducts: Swiper Wrapper Element nicht gefunden!');
+      this.innerHTML = '<p>Fehler beim Erstellen des Karussells.</p>'; // Zeige Fehlermeldung im UI
+      return; // Beende, wenn der Wrapper fehlt
+    }
+
+    let productSlidesHtml = '';
+
+    products.forEach((product) => {
+      // Erstelle das HTML für ein einzelnes Produkt als Swiper Slide
+      productSlidesHtml += `
+          <div class="swiper-slide recently-viewed-product-slide">
+            <div class="recently-viewed-product-content"> {# Container für das Produkt-Item #}
+              <a href="/products/${product.handle}" class="recently-viewed-product-link">
+                ${
+                  product.featured_image
+                    ? `<img class="recently-viewed-product-image" src="<span class="math-inline">\{product\.featured\_image\}"
+alt\="</span>{product.title || 'Produktbild'}"
+                        loading="lazy">`
+                    : '<div class="recently-viewed-product-image placeholder-image"></div>'
+                }
+                <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
+                ${
+                  product.price !== undefined && product.currency
+                    ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)} ${
+                        product.currency
+                      }</p>`
+                    : ''
+                }
+              </a>
+              {# F\u00FCge hier optional einen "Jetzt kaufen" Button oder \u00C4hnliches hinzu #}
+              {# <button class="button">Jetzt kaufen</button> #}
+            </div>
           </div>
         `;
+    });
+
+    // Füge die generierten Slides in den Swiper Wrapper ein
+    swiperWrapper.innerHTML = productSlidesHtml;
+
+    console.log('[RVP] renderProducts: Produktdaten als Swiper Slides in Wrapper eingefügt.');
+
+    // --- INITIALISIERE SWIPER ---
+    // Suche das Haupt-Swiper-Element im DOM deines Custom Elements
+    const swiperElement = this.querySelector('.recently-viewed-products-swiper');
+
+    if (swiperElement && typeof Swiper !== 'undefined') {
+      // Prüfe, ob Swiper JS geladen ist
+      console.log('[RVP] renderProducts: Swiper Element gefunden, initialisiere Swiper.');
+      // Initialisiere Swiper mit Optionen
+      // Passe die Optionen an, um das Verhalten deines Karussells zu steuern!
+      const mySwiper = new Swiper(swiperElement, {
+        // Beispiel-Optionen (passe diese an deine Bedürfnisse an!)
+        slidesPerView: 'auto', // Zeigt so viele Slides wie reinpassen
+        spaceBetween: 20, // Abstand zwischen den Slides (in px)
+        loop: false, // Endloses Scrollen (optional)
+        navigation: {
+          // Navigation Pfeile
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+        pagination: {
+          // Pagination Dots
+          el: '.swiper-pagination',
+          clickable: true, // Macht die Dots klickbar
+        },
+        // Füge hier weitere Swiper Optionen hinzu (Responsivität, etc.)
+        // Siehe Swiper API Dokumentation f\u00FCr alle Optionen: https://swiperjs.com/api/
+        // Responsive Breakpoints sind wichtig f\u00FCr verschiedene Ger\u00E4tegr\u00F6\u00DFen
+        breakpoints: {
+          // Beispiel f\u00FCr Responsivit\u00E4t:
+          640: {
+            // > 640px Breite
+            slidesPerView: 2,
+            spaceBetween: 20,
+          },
+          768: {
+            // > 768px Breite
+            slidesPerView: 3,
+            spaceBetween: 40,
+          },
+          1024: {
+            // > 1024px Breite
+            slidesPerView: 4,
+            spaceBetween: 50,
+          },
+        },
       });
-
-      carouselHtml += '</div>'; // Schließe den Karussell-Container
-
-      this.innerHTML = carouselHtml; // Füge das generierte HTML in das Custom Element ein
-
-      console.log('[RVP] renderProducts: Produktdaten gerendert.');
-
-      // TODO: Initialisiere HIER deine gewählte Karussell-Bibliothek
-      // Suche das Hauptelement des Karussells im DOM deines Custom Elements
-      const carouselElement = this.querySelector('.recently-viewed-products-carousel-container'); // Beispiel Selector
-
-      if (carouselElement) {
-        console.log('[RVP] renderProducts: Karussell-Element gefunden, versuche zu initialisieren.');
-        // Dein Code zur Initialisierung der Karussell-Bibliothek kommt hier hin.
-        // Beispiel (hypothetisch für Swiper):
-        // new Swiper(carouselElement, {
-        //    // Swiper Konfiguration hier
-        //    slidesPerView: 'auto',
-        //    spaceBetween: 20,
-        //    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
-        //    pagination: { el: '.swiper-pagination', clickable: true },
-        // });
-        console.log('[RVP] renderProducts: TODO: Karussell-Initialisierungscode fehlt.');
-      } else {
-        console.error('[RVP] renderProducts: Karussell-Element im DOM nicht gefunden!');
-      }
+      console.log('[RVP] renderProducts: Swiper initialisiert.', mySwiper);
+    } else if (typeof Swiper === 'undefined') {
+      console.error(
+        '[RVP] renderProducts: Swiper JS Bibliothek nicht geladen! Stelle sicher, dass sie in theme.liquid oder im Snippet eingebunden ist.'
+      );
+      this.innerHTML = '<p>Fehler: Karussell-Bibliothek konnte nicht geladen werden.</p>'; // Fehlermeldung im UI
     } else {
-      this.innerHTML = '<p>Keine gültigen Produkte zum Anzeigen gefunden.</p>';
-      console.log('[RVP] renderProducts: Keine gültigen Produkte zum Anzeigen gefunden.');
+      console.error(
+        '[RVP] renderProducts: Swiper Container-Element (.recently-viewed-products-swiper) im DOM nicht gefunden!'
+      );
+      this.innerHTML = '<p>Fehler beim Erstellen des Karussells.</p>'; // Zeige Fehlermeldung im UI
     }
   }
 
