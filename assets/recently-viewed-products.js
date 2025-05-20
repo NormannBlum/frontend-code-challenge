@@ -140,7 +140,7 @@ class RecentlyViewedProducts extends HTMLElement {
 
       console.log('[RVP] loadAndDisplayProducts: Geladene Produkt-Handles:', productHandles);
 
-      const maxProductsToDisplay = parseInt(this.dataset.maxProducts, 10) || 4;
+      const maxProductsToDisplay = 10;
       console.log(`[RVP] loadAndDisplayProducts: Max Produkte zum Anzeigen (aus Einstellung): ${maxProductsToDisplay}`);
 
       const handlesToFetch = productHandles.slice(0, maxProductsToDisplay);
@@ -229,10 +229,9 @@ class RecentlyViewedProducts extends HTMLElement {
       <div class="swiper recently-viewed-products-swiper">
         <div class="swiper-wrapper">
         </div>
-        <div class="swiper-pagination"></div>
         <div class="swiper-button-prev"></div>
         <div class="swiper-button-next"></div>
-        <div class="swiper-scrollbar"></div>
+        <div class="swiper-pagination"></div>
       </div>
     `;
     this.innerHTML = carouselHtml; // Grundgerüst einfügen
@@ -245,63 +244,79 @@ class RecentlyViewedProducts extends HTMLElement {
     }
 
     let productSlidesHtml = '';
-    products.forEach((product) => {
-      console.log('[RVP] ----- START Produkt-Objekt für Rendering -----');
-      // console.log(product); // Für Debugging bei Bedarf einkommentieren
-      console.log('[RVP] Wert von product.featured_image:', product.featured_image);
-      // console.log('[RVP] Typ von product.featured_image:', typeof product.featured_image); // Für Debugging
 
-      let imageUrl = null;
-      if (
-        product.featured_image &&
-        typeof product.featured_image === 'string' &&
-        product.featured_image.trim() !== ''
-      ) {
-        imageUrl = product.featured_image;
-        // console.log('[RVP] Verwende product.featured_image:', imageUrl); // Für Debugging
-      } else if (
-        product.images &&
-        Array.isArray(product.images) &&
-        product.images.length > 0 &&
-        product.images[0] &&
-        typeof product.images[0].src === 'string' &&
-        product.images[0].src.trim() !== ''
-      ) {
-        imageUrl = product.images[0].src;
-        // console.log('[RVP] Verwende erstes Bild aus product.images[0].src:', imageUrl); // Für Debugging
-      } else {
-        console.log(
-          '[RVP] Kein gültiges featured_image und kein gültiges erstes Bild im images-Array gefunden für Produkt:',
-          product.handle
-        );
-      }
-      // console.log('[RVP] ----- ENDE Produkt-Objekt für Rendering -----'); // Für Debugging
+    products.forEach((product) => {
+      // console.log('[RVP] ----- START Produkt-Objekt für Rendering -----'); // Auskommentiert für weniger Verbosity
+      // console.log(product); // Auskommentiert für weniger Verbosity
+
+      const imageUrl =
+        (typeof product.featured_image === 'string' &&
+          product.featured_image.trim() !== '' &&
+          product.featured_image) ||
+        product.images?.[0]?.src ||
+        null;
+      // console.log('[RVP] Ermittelte imageUrl:', imageUrl); // Auskommentiert
 
       const imageAlt = product.title || 'Produktbild';
+      let priceHtml = '';
+
+      const firstVariant = product.variants?.[0];
+
+      if (firstVariant && firstVariant.price !== undefined && firstVariant.price !== null) {
+        const priceValue = parseFloat(firstVariant.price);
+
+        if (!isNaN(priceValue)) {
+          const shopCurrencyCode = window.Shopify?.currency?.active || '';
+          let currencySymbolPrefix = '';
+          let currencyCodeSuffix = '';
+          let priceString = priceValue.toFixed(2); // Preis immer zuerst mit Punkt formatieren
+
+          if (shopCurrencyCode === 'EUR') {
+            currencySymbolPrefix = '€';
+            currencyCodeSuffix = ' EUR';
+            priceString = priceString.replace('.', ','); // Ersetze Punkt durch Komma für EUR
+          } else if (shopCurrencyCode) {
+            currencyCodeSuffix = ` ${shopCurrencyCode}`;
+          }
+
+          priceHtml = `<p class="recently-viewed-product-price">${currencySymbolPrefix}${priceValue.toFixed(
+            2
+          )}${currencyCodeSuffix}</p>`;
+
+          console.log(
+            `[RVP] Preis für ${product.handle} formatiert: ${currencySymbolPrefix}${priceValue.toFixed(
+              2
+            )}${currencyCodeSuffix}`
+          );
+        } else {
+          console.warn(
+            `[RVP] Preis für ${product.handle} konnte nicht in eine Zahl umgewandelt werden:`,
+            firstVariant.price
+          );
+        }
+      } else {
+        console.warn(`[RVP] Keine gültige erste Variante oder kein Preis für Produkt ${product.handle} gefunden.`);
+      }
 
       productSlidesHtml += `
-        <div class="swiper-slide recently-viewed-product-slide">
-          <div class="recently-viewed-product-content">
-            <a href="/products/${product.handle}" class="recently-viewed-product-link">
-              ${
-                imageUrl
-                  ? `<img class="recently-viewed-product-image" src="${imageUrl}"
-                       alt="${imageAlt}"
-                       loading="lazy"
-                       width="150" 
-                       height="150">`
-                  : '<div class="recently-viewed-product-image placeholder-image">Kein Bild</div>'
-              }
-              <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
-              ${
-                product.price !== undefined
-                  ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)}</p>`
-                  : ''
-              }
-            </a>
-          </div>
-        </div>
-      `;
+    <div class="swiper-slide recently-viewed-product-slide">
+      <div class="recently-viewed-product-content">
+        <a href="/products/${product.handle}" class="recently-viewed-product-link">
+          ${
+            imageUrl
+              ? `<img class="recently-viewed-product-image" src="${imageUrl}"
+                   alt="${imageAlt}"
+                   loading="lazy"
+                   width="150" 
+                   height="150">`
+              : '<div class="recently-viewed-product-image placeholder-image">Kein Bild</div>'
+          }
+          <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
+          ${priceHtml}
+        </a>
+      </div>
+    </div>
+  `;
     });
 
     swiperWrapper.innerHTML = productSlidesHtml; // Slides einfügen
