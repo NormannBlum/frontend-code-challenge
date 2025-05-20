@@ -76,6 +76,10 @@ function addRecentlyViewedProduct(productHandle, maxItems = 10) {
  * @extends HTMLElement
  */
 class RecentlyViewedProducts extends HTMLElement {
+  /**
+   * Constructs the Custom Element.
+   * Calls super() and logs an initialization message.
+   */
   constructor() {
     super(); // Immer zuerst super() im constructor aufrufen bei Custom Elements
     console.log('[RVP] RecentlyViewedProducts: Konstruktor aufgerufen.');
@@ -85,17 +89,32 @@ class RecentlyViewedProducts extends HTMLElement {
   /**
    * Called when the element is inserted into the DOM.
    * This is the main entry point for the element's logic.
-   * Reads data from localStorage and starts the fetching process.
+   * It initiates the process of loading product handles from localStorage,
+   * fetching product data, and then rendering the products.
    */
   connectedCallback() {
     console.log('[RVP] RecentlyViewedProducts Custom Element connected to the DOM');
+    // Starte den Prozess des Ladens und Anzeigens der Produkte
     this.loadAndDisplayProducts();
   }
 
+  /**
+   * Called when the element is removed from the DOM.
+   * Useful for cleanup tasks like removing event listeners or stopping timers.
+   */
   disconnectedCallback() {
     console.log('[RVP] RecentlyViewedProducts Custom Element disconnected from the DOM');
+    // TODO: Hier Event-Listener oder Ressourcen aufräumen, falls nötig (z.B. Swiper Instanz zerstören)
   }
 
+  /**
+   * Orchestrates the loading of recently viewed product data and triggers rendering.
+   * 1. Reads product handles from localStorage.
+   * 2. Parses these handles.
+   * 3. Fetches full product data for a limited number of handles.
+   * 4. Calls the renderProducts method with the fetched data.
+   * Handles errors during localStorage access or data fetching.
+   */
   loadAndDisplayProducts() {
     console.log('[RVP] loadAndDisplayProducts: Funktion gestartet.');
     try {
@@ -121,22 +140,19 @@ class RecentlyViewedProducts extends HTMLElement {
 
       console.log('[RVP] loadAndDisplayProducts: Geladene Produkt-Handles:', productHandles);
 
-      const maxProductsToDisplay = parseInt(this.dataset.maxProducts, 10) || 4; // Lese data-max-products Attribut, Standard 4
+      const maxProductsToDisplay = parseInt(this.dataset.maxProducts, 10) || 4;
       console.log(`[RVP] loadAndDisplayProducts: Max Produkte zum Anzeigen (aus Einstellung): ${maxProductsToDisplay}`);
 
-      // Begrenze die Anzahl der Handles, die wir abrufen
       const handlesToFetch = productHandles.slice(0, maxProductsToDisplay);
       console.log('[RVP] loadAndDisplayProducts: Handles, die abgerufen werden:', handlesToFetch);
 
       if (handlesToFetch.length > 0) {
-        // Hier beginnt die Logik zum Abrufen der Produktdaten
         console.log('[RVP] loadAndDisplayProducts: Rufe fetchProductData für jedes Handle auf.');
 
         const fetchPromises = handlesToFetch.map((handle) => this.fetchProductData(handle));
 
         Promise.all(fetchPromises)
           .then((productsData) => {
-            // Filtere fehlgeschlagene Abrufe heraus (falls fetchProductData null zurückgibt bei Fehler)
             const validProducts = productsData.filter((product) => product !== null);
             console.log('[RVP] loadAndDisplayProducts: Produktdaten erfolgreich abgerufen:', validProducts);
             this.renderProducts(validProducts);
@@ -157,6 +173,7 @@ class RecentlyViewedProducts extends HTMLElement {
 
   /**
    * Fetches product data for a given handle from Shopify's JSON endpoint.
+   * @async
    * @param {string} handle - The product handle.
    * @returns {Promise<object|null>} A promise that resolves with the product data object or null on error.
    */
@@ -165,7 +182,6 @@ class RecentlyViewedProducts extends HTMLElement {
       console.warn('[RVP] fetchProductData: Kein Handle gegeben.');
       return null;
     }
-    // Baue die URL für den JSON-Endpunkt. window.shopUrl kommt aus theme.liquid.
     if (typeof window.shopUrl === 'undefined') {
       console.error('[RVP] fetchProductData: window.shopUrl ist nicht definiert!');
       return null;
@@ -185,7 +201,6 @@ class RecentlyViewedProducts extends HTMLElement {
 
       const data = await response.json();
       console.log(`[RVP] fetchProductData: Daten erfolgreich abgerufen für ${handle}.`);
-      // Shopify's .json Endpunkt gibt ein Objekt mit einem 'product' Schlüssel zurück
       return data.product;
     } catch (error) {
       console.error(`[RVP] fetchProductData: Fehler beim Fetch für ${url}:`, error);
@@ -195,24 +210,21 @@ class RecentlyViewedProducts extends HTMLElement {
 
   /**
    * Renders the fetched product data into the Custom Element's DOM.
-   * This method should also initialize the carousel library (Swiper).
+   * This method also initializes the carousel library (Swiper).
    *
    * @param {Array<object>} products - An array of product data objects.
    */
   renderProducts(products) {
     console.log('[RVP] renderProducts: Rendere Produkte.', products);
 
-    // Zeige eine Meldung an, wenn keine Produkte zum Anzeigen vorhanden sind
     if (!products || products.length === 0) {
       this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>';
       console.log('[RVP] renderProducts: Keine Produkte zum Anzeigen gefunden.');
-      return; // Beende die Funktion, wenn keine Produkte da sind
+      return;
     }
 
-    // Entferne vorherigen Inhalt (z.B. Platzhalter oder Lade-Indikator, oder vorherige Produktliste)
-    this.innerHTML = '';
+    this.innerHTML = ''; // Vorherigen Inhalt entfernen
 
-    // --- ERSTELLE DAS HTML-MARKUP FÜR SWIPER ---
     let carouselHtml = `
       <div class="swiper recently-viewed-products-swiper">
         <div class="swiper-wrapper">
@@ -223,81 +235,83 @@ class RecentlyViewedProducts extends HTMLElement {
         <div class="swiper-scrollbar"></div>
       </div>
     `;
+    this.innerHTML = carouselHtml; // Grundgerüst einfügen
 
-    // Füge das Grundgerüst in das Custom Element ein
-    this.innerHTML = carouselHtml;
-
-    // Finde den Swiper Wrapper im DOM deines Custom Elements, da wir die Slides dort einf\u00FCgen
     const swiperWrapper = this.querySelector('.swiper-wrapper');
-
     if (!swiperWrapper) {
       console.error('[RVP] renderProducts: Swiper Wrapper Element nicht gefunden!');
       this.innerHTML = '<p>Fehler beim Erstellen des Karussells.</p>';
-      return; // Beende, wenn der Wrapper fehlt
+      return;
     }
 
-    // --- FÜGE DIE PRODUKTE ALS SWIPER SLIDES HINZU ---
     let productSlidesHtml = '';
-
-    // INNERHALB der renderProducts-Methode, in der products.forEach-Schleife:
     products.forEach((product) => {
       console.log('[RVP] ----- START Produkt-Objekt für Rendering -----');
-      console.log(product);
+      // console.log(product); // Für Debugging bei Bedarf einkommentieren
       console.log('[RVP] Wert von product.featured_image:', product.featured_image);
-      console.log('[RVP] Typ von product.featured_image:', typeof product.featured_image);
+      // console.log('[RVP] Typ von product.featured_image:', typeof product.featured_image); // Für Debugging
 
       let imageUrl = null;
-      if (product.featured_image) {
-        imageUrl = product.featured_image; // Nutze das featured_image, wenn es existiert (und ein String ist)
-        console.log('[RVP] Verwende product.featured_image:', imageUrl);
-      } else if (product.images && product.images.length > 0 && product.images[0].src) {
-        imageUrl = product.images[0].src; // Nutze das erste Bild aus dem images-Array, wenn featured_image fehlt
-        console.log('[RVP] Verwende erstes Bild aus product.images[0].src:', imageUrl);
+      if (
+        product.featured_image &&
+        typeof product.featured_image === 'string' &&
+        product.featured_image.trim() !== ''
+      ) {
+        imageUrl = product.featured_image;
+        // console.log('[RVP] Verwende product.featured_image:', imageUrl); // Für Debugging
+      } else if (
+        product.images &&
+        Array.isArray(product.images) &&
+        product.images.length > 0 &&
+        product.images[0] &&
+        typeof product.images[0].src === 'string' &&
+        product.images[0].src.trim() !== ''
+      ) {
+        imageUrl = product.images[0].src;
+        // console.log('[RVP] Verwende erstes Bild aus product.images[0].src:', imageUrl); // Für Debugging
       } else {
-        console.log('[RVP] Kein featured_image und kein images-Array mit src gefunden für Produkt:', product.handle);
+        console.log(
+          '[RVP] Kein gültiges featured_image und kein gültiges erstes Bild im images-Array gefunden für Produkt:',
+          product.handle
+        );
       }
-      console.log('[RVP] ----- ENDE Produkt-Objekt für Rendering -----');
+      // console.log('[RVP] ----- ENDE Produkt-Objekt für Rendering -----'); // Für Debugging
 
       const imageAlt = product.title || 'Produktbild';
 
       productSlidesHtml += `
-      <div class="swiper-slide recently-viewed-product-slide">
-        <div class="recently-viewed-product-content">
-          <a href="/products/${product.handle}" class="recently-viewed-product-link">
-            ${
-              imageUrl
-                ? `<img class="recently-viewed-product-image" src="${imageUrl}"
-                     alt="${imageAlt}"
-                     loading="lazy"
-                     width="150" 
-                     height="150">`
-                : '<div class="recently-viewed-product-image placeholder-image">Kein Bild</div>'
-            }
-            <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
-            ${
-              product.price !== undefined
-                ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)}</p>` // Währung vorerst weggelassen für Einfachheit
-                : ''
-            }
-          </a>
+        <div class="swiper-slide recently-viewed-product-slide">
+          <div class="recently-viewed-product-content">
+            <a href="/products/${product.handle}" class="recently-viewed-product-link">
+              ${
+                imageUrl
+                  ? `<img class="recently-viewed-product-image" src="${imageUrl}"
+                       alt="${imageAlt}"
+                       loading="lazy"
+                       width="150" 
+                       height="150">`
+                  : '<div class="recently-viewed-product-image placeholder-image">Kein Bild</div>'
+              }
+              <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
+              ${
+                product.price !== undefined
+                  ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)}</p>`
+                  : ''
+              }
+            </a>
+          </div>
         </div>
-      </div>
-    `;
+      `;
     });
 
-    // Füge die generierten Slides in den Swiper Wrapper ein
-    swiperWrapper.innerHTML = productSlidesHtml;
-
+    swiperWrapper.innerHTML = productSlidesHtml; // Slides einfügen
     console.log('[RVP] renderProducts: Produktdaten als Swiper Slides in Wrapper eingefügt.');
 
-    // --- INITIALISIERE SWIPER ---
     const swiperElement = this.querySelector('.recently-viewed-products-swiper');
-
     if (swiperElement && typeof Swiper !== 'undefined') {
       console.log('[RVP] renderProducts: Swiper Element gefunden, initialisiere Swiper.');
-
       const mySwiper = new Swiper(swiperElement, {
-        slidesPerView: 'auto', // Zeigt so viele Slides wie reinpassen
+        slidesPerView: 'auto',
         spaceBetween: 20,
         loop: true,
         navigation: {
@@ -309,18 +323,9 @@ class RecentlyViewedProducts extends HTMLElement {
           clickable: true,
         },
         breakpoints: {
-          640: {
-            slidesPerView: 2,
-            spaceBetween: 20,
-          },
-          768: {
-            slidesPerView: 3,
-            spaceBetween: 40,
-          },
-          1024: {
-            slidesPerView: 4,
-            spaceBetween: 50,
-          },
+          640: { slidesPerView: 2, spaceBetween: 20 },
+          768: { slidesPerView: 3, spaceBetween: 40 },
+          1024: { slidesPerView: 4, spaceBetween: 50 },
         },
       });
       console.log('[RVP] renderProducts: Swiper initialisiert.', mySwiper);
@@ -336,13 +341,8 @@ class RecentlyViewedProducts extends HTMLElement {
       this.innerHTML = '<p>Fehler beim Erstellen des Karussells.</p>';
     }
   }
-
-  // Hier werden später weitere Methoden hinzukommen (z.B. für Karussell-Event-Handler)
 }
 
-// Definiere das Custom Element und verknüpfe es mit einem HTML-Tag
-// Das Tag wird dann im HTML des Snippets verwendet: <recently-viewed-products></recently-viewed-products>
-// Stelle sicher, dass dies nur einmal ausgeführt wird
 if (!customElements.get('recently-viewed-products')) {
   console.log('[RVP] Definiere Custom Element "recently-viewed-products".');
   customElements.define('recently-viewed-products', RecentlyViewedProducts);
