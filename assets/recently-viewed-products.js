@@ -238,39 +238,51 @@ class RecentlyViewedProducts extends HTMLElement {
 
     // --- FÜGE DIE PRODUKTE ALS SWIPER SLIDES HINZU ---
     let productSlidesHtml = '';
+
+    // INNERHALB der renderProducts-Methode, in der products.forEach-Schleife:
     products.forEach((product) => {
-      // Erstelle das HTML für ein einzelnes Produkt als Swiper Slide
-      // Passe die Struktur und CSS-Klassen an dein gewünschtes Design und die Swiper-Anforderungen an!
+      console.log('[RVP] ----- START Produkt-Objekt für Rendering -----');
+      console.log(product);
+      console.log('[RVP] Wert von product.featured_image:', product.featured_image);
+      console.log('[RVP] Typ von product.featured_image:', typeof product.featured_image);
+
+      let imageUrl = null;
+      if (product.featured_image) {
+        imageUrl = product.featured_image; // Nutze das featured_image, wenn es existiert (und ein String ist)
+        console.log('[RVP] Verwende product.featured_image:', imageUrl);
+      } else if (product.images && product.images.length > 0 && product.images[0].src) {
+        imageUrl = product.images[0].src; // Nutze das erste Bild aus dem images-Array, wenn featured_image fehlt
+        console.log('[RVP] Verwende erstes Bild aus product.images[0].src:', imageUrl);
+      } else {
+        console.log('[RVP] Kein featured_image und kein images-Array mit src gefunden für Produkt:', product.handle);
+      }
+      console.log('[RVP] ----- ENDE Produkt-Objekt für Rendering -----');
+
+      const imageAlt = product.title || 'Produktbild';
+
       productSlidesHtml += `
-        <div class="swiper-slide recently-viewed-product-slide"> {# Jedes Produkt ist eine Swiper Slide #}
-          <div class="recently-viewed-product-content"> {# Container für das Produkt-Item #}
-            <a href="/products/${product.handle}" class="recently-viewed-product-link">
-              ${
-                product.featured_image
-                  ? `<img src="${product.featured_image}"
-                      alt="${product.title || 'Produktbild'}" {# alt Text hinzufügen, auch wenn Titel fehlt #}
-                      loading="lazy" {# Gutes Praxis für Bilder außerhalb des Viewports #}
-                      width="150" {# Beispielgruppe, passe sie an dein Design an #}
-                      height="150">`
-                  : '<div class="placeholder-image"></div>'
-              }
-              <h3 class="recently-viewed-product-title">${
-                product.title || 'Unbenanntes Produkt'
-              }</h3> {# Titel anzeigen, Platzhalter falls fehlt #}
-              {# Preisformatierung in JS #}
-              ${
-                product.price !== undefined && product.currency
-                  ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)} ${
-                      product.currency
-                    }</p>`
-                  : ''
-              }
-            </a>
-            {# Füge hier optional einen "Jetzt kaufen" Button oder ähnliches hinzu #}
-            {# <button class="button">Jetzt kaufen</button> #}
-          </div>
+      <div class="swiper-slide recently-viewed-product-slide">
+        <div class="recently-viewed-product-content">
+          <a href="/products/${product.handle}" class="recently-viewed-product-link">
+            ${
+              imageUrl
+                ? `<img class="recently-viewed-product-image" src="${imageUrl}"
+                     alt="${imageAlt}"
+                     loading="lazy"
+                     width="150" 
+                     height="150">`
+                : '<div class="recently-viewed-product-image placeholder-image">Kein Bild</div>'
+            }
+            <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
+            ${
+              product.price !== undefined
+                ? `<p class="recently-viewed-product-price">${(product.price / 100).toFixed(2)}</p>` // Währung vorerst weggelassen für Einfachheit
+                : ''
+            }
+          </a>
         </div>
-      `;
+      </div>
+    `;
     });
 
     // Füge die generierten Slides in den Swiper Wrapper ein
