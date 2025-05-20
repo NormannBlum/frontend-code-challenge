@@ -94,7 +94,6 @@ class RecentlyViewedProducts extends HTMLElement {
    */
   connectedCallback() {
     console.log('[RVP] RecentlyViewedProducts Custom Element connected to the DOM');
-    // Starte den Prozess des Ladens und Anzeigens der Produkte
     this.loadAndDisplayProducts();
   }
 
@@ -104,7 +103,6 @@ class RecentlyViewedProducts extends HTMLElement {
    */
   disconnectedCallback() {
     console.log('[RVP] RecentlyViewedProducts Custom Element disconnected from the DOM');
-    // TODO: Hier Event-Listener oder Ressourcen aufräumen, falls nötig (z.B. Swiper Instanz zerstören)
   }
 
   /**
@@ -159,15 +157,15 @@ class RecentlyViewedProducts extends HTMLElement {
           })
           .catch((error) => {
             console.error('[RVP] loadAndDisplayProducts: Fehler beim Abrufen der Produktdaten:', error);
-            this.innerHTML = '<p>Fehler beim Laden der Produktdetails.</p>';
+            this.innerHTML = '<p>Error loading product details.</p>';
           });
       } else {
-        this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>';
+        this.innerHTML = '<p>No products viewed recently.</p>';
         console.log('[RVP] loadAndDisplayProducts: Keine Produkte zum Anzeigen vorhanden.');
       }
     } catch (error) {
       console.error('[RVP] ❌ Fehler bei localStorage Operation in loadAndDisplayProducts:', error);
-      this.innerHTML = '<p>Fehler beim Laden der kürzlich angesehenen Produkte.</p>';
+      this.innerHTML = '<p>Error loading recently viewed products.</p>';
     }
   }
 
@@ -218,7 +216,7 @@ class RecentlyViewedProducts extends HTMLElement {
     console.log('[RVP] renderProducts: Rendere Produkte.', products);
 
     if (!products || products.length === 0) {
-      this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>';
+      this.innerHTML = '<p>No products viewed recently.</p>';
       console.log('[RVP] renderProducts: Keine Produkte zum Anzeigen gefunden.');
       return;
     }
@@ -338,6 +336,7 @@ class RecentlyViewedProducts extends HTMLElement {
           clickable: true,
         },
         breakpoints: {
+          // 310: { slidesPerView: 1, spaceBetween: 10 },
           640: { slidesPerView: 2, spaceBetween: 20 },
           768: { slidesPerView: 3, spaceBetween: 40 },
           1024: { slidesPerView: 4, spaceBetween: 50 },
@@ -348,7 +347,7 @@ class RecentlyViewedProducts extends HTMLElement {
       console.error(
         '[RVP] renderProducts: Swiper JS Bibliothek nicht geladen! Stelle sicher, dass sie in theme.liquid oder im Snippet eingebunden ist.'
       );
-      this.innerHTML = '<p>Fehler: Karussell-Bibliothek konnte nicht geladen werden.</p>';
+      this.innerHTML = '<p>Error: Carousel library could not be loaded.</p>';
     } else {
       console.error(
         '[RVP] renderProducts: Swiper Container-Element (.recently-viewed-products-swiper) im DOM nicht gefunden!'
