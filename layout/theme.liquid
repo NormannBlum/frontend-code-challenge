@@ -437,7 +437,7 @@ body {
     <script src="{{ 'recently-viewed-products.js' | asset_url }}" defer="defer"></script>
 
     {# Swiper JS von CDN #}
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
 
     {% comment %}
       Tracking-Skript für "Recently Viewed Products".
@@ -456,7 +456,7 @@ body {
           if (typeof addRecentlyViewedProduct === 'function') {
             if (currentProductHandle && currentProductHandle !== '' && currentProductHandle !== 'null') {
               console.log('🗑️ Calling addRecentlyViewedProduct for handle:', currentProductHandle);
-              addRecentlyViewedProduct(currentProductHandle, 10); // 10 ist die max. Anzahl an Produkten
+              addRecentlyViewedProduct(currentProductHandle, 10);
             } else {
               console.warn('🗑️ Invalid or missing product handle for tracking:', currentProductHandle);
             }
