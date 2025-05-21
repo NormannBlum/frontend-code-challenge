@@ -1,10 +1,4 @@
 /**
- * Key for accessing recently viewed products in localStorage.
- * @const {string}
- */
-const RVP_LOCAL_STORAGE_KEY = 'recentlyViewed';
-
-/**
  * Adds a product handle to the 'recentlyViewed' list in localStorage.
  * Ensures uniqueness and limits the list size.
  * This function should be called on product pages.
@@ -13,13 +7,13 @@ const RVP_LOCAL_STORAGE_KEY = 'recentlyViewed';
  * @param {number} [maxItems=10] - Maximum number of items to store in the list.
  */
 function addRecentlyViewedProduct(productHandle, maxItems = 10) {
-  if (!productHandle || typeof productHandle !== 'string' || productHandle.trim() === '') {
-    console.warn('[RVP] addRecentlyViewedProduct: Ungültiger oder leerer Produkt-Handle erhalten.', productHandle);
+  if (!productHandle || typeof productHandle !== 'string') {
+    console.warn('[RVP] addRecentlyViewedProduct: Ungültiger Produkt-Handle erhalten.', productHandle);
     return;
   }
 
   try {
-    const viewedProductsJson = localStorage.getItem(RVP_LOCAL_STORAGE_KEY);
+    const viewedProductsJson = localStorage.getItem('recentlyViewed');
     let viewedProducts = [];
 
     if (viewedProductsJson) {
@@ -27,13 +21,13 @@ function addRecentlyViewedProduct(productHandle, maxItems = 10) {
         viewedProducts = JSON.parse(viewedProductsJson);
         if (!Array.isArray(viewedProducts)) {
           console.warn(
-            `[RVP] addRecentlyViewedProduct: localStorage "${RVP_LOCAL_STORAGE_KEY}" enthält keinen gültigen Array. Liste wird zurückgesetzt.`
+            '[RVP] addRecentlyViewedProduct: localStorage "recentlyViewed" enthält keinen gültigen Array. Liste wird zurückgesetzt.'
           );
           viewedProducts = [];
         }
       } catch (parseError) {
         console.error(
-          `[RVP] addRecentlyViewedProduct: Fehler beim Parsen von localStorage "${RVP_LOCAL_STORAGE_KEY}":`,
+          '[RVP] addRecentlyViewedProduct: Fehler beim Parsen von localStorage "recentlyViewed":',
           parseError
         );
         viewedProducts = [];
@@ -43,15 +37,15 @@ function addRecentlyViewedProduct(productHandle, maxItems = 10) {
     viewedProducts = viewedProducts.filter((handle) => handle !== productHandle);
     viewedProducts.unshift(productHandle);
     viewedProducts = viewedProducts.slice(0, maxItems);
-    localStorage.setItem(RVP_LOCAL_STORAGE_KEY, JSON.stringify(viewedProducts));
+
+    localStorage.setItem('recentlyViewed', JSON.stringify(viewedProducts));
 
     console.log(
-      `[RVP] ✅ Produkt '${productHandle}' zu '${RVP_LOCAL_STORAGE_KEY}' hinzugefügt/aktualisiert. Aktuelle Liste (${viewedProducts.length} Einträge):`,
-      viewedProducts
+      `[RVP] ✅ Produkt '${productHandle}' zu 'recentlyViewed' hinzugefügt/aktualisiert. (${viewedProducts.length} Einträge).`
     );
   } catch (error) {
     console.error(
-      `[RVP] ❌ Fehler bei localStorage Operation für "${RVP_LOCAL_STORAGE_KEY}" in addRecentlyViewedProduct:`,
+      '[RVP] ❌ Fehler bei localStorage Operation für "recentlyViewed" in addRecentlyViewedProduct:',
       error
     );
   }
@@ -70,74 +64,69 @@ class RecentlyViewedProducts extends HTMLElement {
    */
   constructor() {
     super();
-    this.swiperInstance = null;
   }
 
   /**
    * Called when the element is inserted into the DOM.
-   * This is the main entry point for the element's logic.
    */
   connectedCallback() {
+    console.log('[RVP] RecentlyViewedProducts Custom Element connected to the DOM');
     this.loadAndDisplayProducts();
   }
 
   /**
    * Called when the element is removed from the DOM.
-   * Useful for cleanup tasks like destroying the Swiper instance.
    */
   disconnectedCallback() {
-    if (this.swiperInstance) {
-      this.swiperInstance.destroy(true, true); // Parameter: destroyElements, cleanStyles
-      console.log('[RVP] Swiper Instanz zerstört.'); // Nützlicher Log für Cleanup
-      this.swiperInstance = null;
-    }
+    console.log('[RVP] RecentlyViewedProducts Custom Element disconnected from the DOM');
   }
 
   /**
    * Orchestrates the loading of recently viewed product data and triggers rendering.
    */
-  async loadAndDisplayProducts() {
+  loadAndDisplayProducts() {
     try {
-      const viewedProductsJson = localStorage.getItem(RVP_LOCAL_STORAGE_KEY);
+      const viewedProductsJson = localStorage.getItem('recentlyViewed');
       let productHandles = [];
 
       if (viewedProductsJson) {
         try {
           productHandles = JSON.parse(viewedProductsJson);
           if (!Array.isArray(productHandles)) {
-            console.warn(/* ... */);
+            console.warn(
+              '[RVP] loadAndDisplayProducts: "recentlyViewed" aus localStorage ist kein Array. Setze zurück.'
+            );
             productHandles = [];
           }
         } catch (parseError) {
-          console.error(/* ... */);
+          console.error('[RVP] loadAndDisplayProducts: Fehler beim Parsen von "recentlyViewed":', parseError);
           productHandles = [];
         }
       }
 
-      const maxProductsToDisplay = parseInt(this.dataset.maxProducts, 10) || 10;
+      const maxProductsToDisplay = 10;
       const handlesToFetch = productHandles.slice(0, maxProductsToDisplay);
 
       if (handlesToFetch.length > 0) {
-        try {
-          const productsData = await Promise.all(handlesToFetch.map((handle) => this.fetchProductData(handle)));
-          const validProducts = productsData.filter((product) => product !== null);
-          this.renderProducts(validProducts);
-        } catch (fetchError) {
-          console.error(
-            '[RVP] loadAndDisplayProducts: Schwerwiegender Fehler beim Abrufen der Produktdaten:',
-            fetchError
-          );
-          this.innerHTML = '<p>Fehler beim Laden der Produktdetails.</p>';
-        }
+        const fetchPromises = handlesToFetch.map((handle) => this.fetchProductData(handle));
+
+        Promise.all(fetchPromises)
+          .then((productsData) => {
+            const validProducts = productsData.filter((product) => product !== null);
+            console.log(`[RVP] loadAndDisplayProducts: ${validProducts.length} Produktdaten erfolgreich abgerufen.`);
+            this.renderProducts(validProducts);
+          })
+          .catch((error) => {
+            console.error('[RVP] loadAndDisplayProducts: Fehler beim Abrufen der Produktdaten:', error);
+            this.innerHTML = '<p>Error loading product details.</p>';
+          });
       } else {
-        this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>';
+        this.innerHTML = '<p>No products viewed recently.</p>';
+        console.log('[RVP] loadAndDisplayProducts: Keine Produkte zum Anzeigen vorhanden.');
       }
     } catch (error) {
-      console.error(
-        `[RVP] ❌ Fehler bei localStorage Operation für "${RVP_LOCAL_STORAGE_KEY}" in loadAndDisplayProducts:`,
-        error
-      );
-      this.innerHTML = '<p>Fehler beim Laden der kürzlich angesehenen Produkte.</p>';
+      console.error('[RVP] ❌ Fehler bei localStorage Operation in loadAndDisplayProducts:', error);
+      this.innerHTML = '<p>Error loading recently viewed products.</p>';
     }
   }
 
@@ -148,8 +137,8 @@ class RecentlyViewedProducts extends HTMLElement {
    * @returns {Promise<object|null>} A promise that resolves with the product data object or null on error.
    */
   async fetchProductData(handle) {
-    if (!handle || typeof handle !== 'string' || handle.trim() === '') {
-      console.warn('[RVP] fetchProductData: Ungültiger oder leerer Handle gegeben.', handle);
+    if (!handle) {
+      console.warn('[RVP] fetchProductData: Kein Handle gegeben.');
       return null;
     }
     if (typeof window.shopUrl === 'undefined') {
@@ -160,12 +149,14 @@ class RecentlyViewedProducts extends HTMLElement {
 
     try {
       const response = await fetch(url);
+
       if (!response.ok) {
         console.error(
           `[RVP] fetchProductData: Fehler beim Abrufen von ${url}: ${response.status} ${response.statusText}`
         );
         return null;
       }
+
       const data = await response.json();
       return data.product;
     } catch (error) {
@@ -176,25 +167,26 @@ class RecentlyViewedProducts extends HTMLElement {
 
   /**
    * Renders the fetched product data into the Custom Element's DOM.
-   * This method also initializes the carousel library (Swiper).
-   *
    * @param {Array<object>} products - An array of product data objects.
    */
   renderProducts(products) {
     if (!products || products.length === 0) {
-      this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>';
+      this.innerHTML = '<p>No products viewed recently.</p>';
+      console.log('[RVP] renderProducts: Keine Produkte zum Anzeigen gefunden.');
       return;
     }
 
-    this.innerHTML = '';
+    this.innerHTML = ''; // Vorherigen Inhalt entfernen
 
-    const carouselHtml = `
+    let carouselHtml = `
       <div class="swiper recently-viewed-products-swiper">
-        <div class="swiper-wrapper"></div>
+        <div class="swiper-wrapper">
+        </div>
         <div class="swiper-button-prev"></div>
         <div class="swiper-button-next"></div>
         <div class="swiper-pagination"></div>
-      </div>`;
+      </div>
+    `;
     this.innerHTML = carouselHtml;
 
     const swiperWrapper = this.querySelector('.swiper-wrapper');
@@ -205,6 +197,7 @@ class RecentlyViewedProducts extends HTMLElement {
     }
 
     let productSlidesHtml = '';
+
     products.forEach((product) => {
       const imageUrl =
         (typeof product.featured_image === 'string' &&
@@ -212,63 +205,69 @@ class RecentlyViewedProducts extends HTMLElement {
           product.featured_image) ||
         product.images?.[0]?.src ||
         null;
+
       const imageAlt = product.title || 'Produktbild';
       let priceHtml = '';
       const firstVariant = product.variants?.[0];
 
-      if (firstVariant?.price !== undefined && firstVariant.price !== null) {
+      if (firstVariant && firstVariant.price !== undefined && firstVariant.price !== null) {
         const priceValue = parseFloat(firstVariant.price);
+
         if (!isNaN(priceValue)) {
           const shopCurrencyCode = window.Shopify?.currency?.active || '';
-          let finalPriceString = '';
+          let currencySymbolPrefix = '';
+          let currencyCodeSuffix = '';
+          let priceString = priceValue.toFixed(2);
 
           if (shopCurrencyCode === 'EUR') {
-            finalPriceString = `€${priceValue.toLocaleString('de-DE', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })} EUR`;
+            currencySymbolPrefix = '€';
+            priceString = priceString.replace('.', ',');
+            priceHtml = `<p class="recently-viewed-product-price">${priceString}${currencySymbolPrefix}</p>`; // Symbol nach Preis für EUR
           } else if (shopCurrencyCode) {
-            finalPriceString = `${priceValue.toFixed(2)} ${shopCurrencyCode}`;
+            currencyCodeSuffix = ` ${shopCurrencyCode}`;
+            priceHtml = `<p class="recently-viewed-product-price">${currencySymbolPrefix}${priceString}${currencyCodeSuffix}</p>`;
           } else {
-            finalPriceString = priceValue.toFixed(2);
+            priceHtml = `<p class="recently-viewed-product-price">${priceString}</p>`;
           }
-          priceHtml = `<p class="recently-viewed-product-price">${finalPriceString}</p>`;
         } else {
-          console.warn(/* ... */);
+          console.warn(
+            `[RVP] Preis für ${product.handle} konnte nicht in eine Zahl umgewandelt werden:`,
+            firstVariant.price
+          );
         }
       } else {
-        console.warn(/* ... */);
+        console.warn(`[RVP] Keine gültige erste Variante oder kein Preis für Produkt ${product.handle} gefunden.`);
       }
 
       productSlidesHtml += `
-        <div class="swiper-slide recently-viewed-product-slide">
-          <div class="recently-viewed-product-content">
-            <a href="/products/${product.handle}" class="recently-viewed-product-link">
-              ${
-                imageUrl
-                  ? `<img class="recently-viewed-product-image" src="${imageUrl}" alt="${imageAlt}" loading="lazy" width="150" height="150">`
-                  : '<div class="recently-viewed-product-image placeholder-image">Kein Bild</div>'
-              }
-              <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
-              ${priceHtml}
-            </a>
-          </div>
-        </div>`;
+    <div class="swiper-slide recently-viewed-product-slide">
+      <div class="recently-viewed-product-content">
+        <a href="/products/${product.handle}" class="recently-viewed-product-link">
+          ${
+            imageUrl
+              ? `<img class="recently-viewed-product-image" src="${imageUrl}"
+                     alt="${imageAlt}"
+                     loading="lazy"
+                     width="150" 
+                     height="150">`
+              : '<div class="recently-viewed-product-image placeholder-image">Kein Bild</div>'
+          }
+          <h3 class="recently-viewed-product-title">${product.title || 'Unbenanntes Produkt'}</h3>
+          ${priceHtml}
+        </a>
+      </div>
+    </div>
+  `;
     });
 
     swiperWrapper.innerHTML = productSlidesHtml;
 
     const swiperElement = this.querySelector('.recently-viewed-products-swiper');
     if (swiperElement && typeof Swiper !== 'undefined') {
-      if (this.swiperInstance) {
-        this.swiperInstance.destroy(true, true);
-      }
-      this.swiperInstance = new Swiper(swiperElement, {
+      const mySwiper = new Swiper(swiperElement, {
         slidesPerView: 'auto',
         spaceBetween: 20,
-        loop:
-          products.length > 1 &&
-          products.length > (this.swiperInstance?.params.slidesPerView || parseInt(this.dataset.maxProducts, 10) || 4),
+        loop: products.length > 1, // Loop nur wenn genug Slides da sind
         navigation: {
           nextEl: '.swiper-button-next',
           prevEl: '.swiper-button-prev',
@@ -283,16 +282,24 @@ class RecentlyViewedProducts extends HTMLElement {
           1024: { slidesPerView: 4, spaceBetween: 50 },
         },
       });
+      console.log('[RVP] renderProducts: Swiper initialisiert.');
     } else if (typeof Swiper === 'undefined') {
-      console.error(/* ... */);
+      console.error(
+        '[RVP] renderProducts: Swiper JS Bibliothek nicht geladen! Stelle sicher, dass sie in theme.liquid oder im Snippet eingebunden ist.'
+      );
       this.innerHTML = '<p>Error: Carousel library could not be loaded.</p>';
     } else {
-      console.error(/* ... */);
+      console.error(
+        '[RVP] renderProducts: Swiper Container-Element (.recently-viewed-products-swiper) im DOM nicht gefunden!'
+      );
       this.innerHTML = '<p>Fehler beim Erstellen des Karussells.</p>';
     }
   }
 }
 
 if (!customElements.get('recently-viewed-products')) {
+  console.log('[RVP] Definiere Custom Element "recently-viewed-products".');
   customElements.define('recently-viewed-products', RecentlyViewedProducts);
+} else {
+  console.log('[RVP] Custom Element "recently-viewed-products" ist bereits definiert.');
 }
