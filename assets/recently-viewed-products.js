@@ -46,7 +46,6 @@ function addRecentlyViewedProduct(productHandle, maxItems = 10) {
     localStorage.setItem(RVP_LOCAL_STORAGE_KEY, JSON.stringify(viewedProducts));
 
     console.log(
-      // Dieser Log ist nützlich für das Debugging des LocalStorage-Inhalts, kann aber auch reduziert werden.
       `[RVP] ✅ Produkt '${productHandle}' zu '${RVP_LOCAL_STORAGE_KEY}' hinzugefügt/aktualisiert. Aktuelle Liste (${viewedProducts.length} Einträge):`,
       viewedProducts
     );
@@ -71,8 +70,7 @@ class RecentlyViewedProducts extends HTMLElement {
    */
   constructor() {
     super();
-    // console.log('[RVP] RecentlyViewedProducts: Konstruktor aufgerufen.'); // Kann entfernt werden
-    this.swiperInstance = null; // Property für die Swiper-Instanz initialisieren
+    this.swiperInstance = null;
   }
 
   /**
@@ -80,7 +78,6 @@ class RecentlyViewedProducts extends HTMLElement {
    * This is the main entry point for the element's logic.
    */
   connectedCallback() {
-    // console.log('[RVP] RecentlyViewedProducts Custom Element connected to the DOM'); // Kann entfernt werden
     this.loadAndDisplayProducts();
   }
 
@@ -89,7 +86,6 @@ class RecentlyViewedProducts extends HTMLElement {
    * Useful for cleanup tasks like destroying the Swiper instance.
    */
   disconnectedCallback() {
-    // console.log('[RVP] RecentlyViewedProducts Custom Element disconnected from the DOM'); // Kann entfernt werden
     if (this.swiperInstance) {
       this.swiperInstance.destroy(true, true); // Parameter: destroyElements, cleanStyles
       console.log('[RVP] Swiper Instanz zerstört.'); // Nützlicher Log für Cleanup
@@ -101,10 +97,6 @@ class RecentlyViewedProducts extends HTMLElement {
    * Orchestrates the loading of recently viewed product data and triggers rendering.
    */
   async loadAndDisplayProducts() {
-    // console.log('[RVP] loadAndDisplayProducts: Funktion gestartet.'); // Kann entfernt werden
-    // Optional: Ladeindikator anzeigen
-    // this.innerHTML = '<p>Lade kürzlich angesehene Produkte...</p>';
-
     try {
       const viewedProductsJson = localStorage.getItem(RVP_LOCAL_STORAGE_KEY);
       let productHandles = [];
@@ -121,20 +113,14 @@ class RecentlyViewedProducts extends HTMLElement {
           productHandles = [];
         }
       }
-      // console.log('[RVP] loadAndDisplayProducts: Geladene Produkt-Handles:', productHandles); // Kann entfernt werden
 
-      const maxProductsToDisplay = parseInt(this.dataset.maxProducts, 10) || 10; // Standard auf 10, wenn du alle aus dem Storage willst
-      // console.log(`[RVP] loadAndDisplayProducts: Max Produkte zum Anzeigen (aus Einstellung oder Standard): ${maxProductsToDisplay}`); // Kann entfernt werden
-
+      const maxProductsToDisplay = parseInt(this.dataset.maxProducts, 10) || 10;
       const handlesToFetch = productHandles.slice(0, maxProductsToDisplay);
-      // console.log('[RVP] loadAndDisplayProducts: Handles, die abgerufen werden:', handlesToFetch); // Kann entfernt werden
 
       if (handlesToFetch.length > 0) {
-        // console.log('[RVP] loadAndDisplayProducts: Rufe fetchProductData für jedes Handle auf.'); // Kann entfernt werden
         try {
           const productsData = await Promise.all(handlesToFetch.map((handle) => this.fetchProductData(handle)));
           const validProducts = productsData.filter((product) => product !== null);
-          // console.log('[RVP] loadAndDisplayProducts: Produktdaten erfolgreich abgerufen:', validProducts); // Kann entfernt werden
           this.renderProducts(validProducts);
         } catch (fetchError) {
           console.error(
@@ -145,7 +131,6 @@ class RecentlyViewedProducts extends HTMLElement {
         }
       } else {
         this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>';
-        // console.log('[RVP] loadAndDisplayProducts: Keine Produkte zum Anzeigen vorhanden.'); // Kann entfernt werden
       }
     } catch (error) {
       console.error(
@@ -172,23 +157,19 @@ class RecentlyViewedProducts extends HTMLElement {
       return null;
     }
     const url = `${window.shopUrl}/products/${handle}.json`;
-    // console.log(`[RVP] fetchProductData: Rufe Daten ab von: ${url}`); // Kann entfernt werden
 
     try {
       const response = await fetch(url);
       if (!response.ok) {
         console.error(
-          // Wichtiger Fehler-Log
           `[RVP] fetchProductData: Fehler beim Abrufen von ${url}: ${response.status} ${response.statusText}`
         );
         return null;
       }
       const data = await response.json();
-      // console.log(`[RVP] fetchProductData: Daten erfolgreich abgerufen für ${handle}.`); // Kann entfernt werden
       return data.product;
     } catch (error) {
-      // Netzwerkfehler etc.
-      console.error(`[RVP] fetchProductData: Fehler beim Fetch für ${url}:`, error); // Wichtiger Fehler-Log
+      console.error(`[RVP] fetchProductData: Fehler beim Fetch für ${url}:`, error);
       return null;
     }
   }
@@ -200,11 +181,8 @@ class RecentlyViewedProducts extends HTMLElement {
    * @param {Array<object>} products - An array of product data objects.
    */
   renderProducts(products) {
-    // console.log('[RVP] renderProducts: Rendere Produkte.', products); // Kann entfernt werden
-
     if (!products || products.length === 0) {
       this.innerHTML = '<p>Noch keine Produkte kürzlich angesehen.</p>';
-      // console.log('[RVP] renderProducts: Keine Produkte zum Anzeigen gefunden.'); // Kann entfernt werden
       return;
     }
 
@@ -221,7 +199,7 @@ class RecentlyViewedProducts extends HTMLElement {
 
     const swiperWrapper = this.querySelector('.swiper-wrapper');
     if (!swiperWrapper) {
-      console.error('[RVP] renderProducts: Swiper Wrapper Element nicht gefunden!'); // Wichtiger Fehler-Log
+      console.error('[RVP] renderProducts: Swiper Wrapper Element nicht gefunden!');
       this.innerHTML = '<p>Fehler beim Erstellen des Karussells.</p>';
       return;
     }
@@ -255,7 +233,6 @@ class RecentlyViewedProducts extends HTMLElement {
             finalPriceString = priceValue.toFixed(2);
           }
           priceHtml = `<p class="recently-viewed-product-price">${finalPriceString}</p>`;
-          // console.log(`[RVP] Preis für ${product.handle} formatiert: ${finalPriceString}`); // Kann entfernt werden
         } else {
           console.warn(/* ... */);
         }
@@ -280,23 +257,18 @@ class RecentlyViewedProducts extends HTMLElement {
     });
 
     swiperWrapper.innerHTML = productSlidesHtml;
-    // console.log('[RVP] renderProducts: Produktdaten als Swiper Slides in Wrapper eingefügt.'); // Kann entfernt werden
 
     const swiperElement = this.querySelector('.recently-viewed-products-swiper');
     if (swiperElement && typeof Swiper !== 'undefined') {
-      // console.log('[RVP] renderProducts: Swiper Element gefunden, initialisiere Swiper.'); // Kann entfernt werden
-
       if (this.swiperInstance) {
-        // BEST PRACTICE: Zerstöre alte Instanz, falls vorhanden
         this.swiperInstance.destroy(true, true);
       }
       this.swiperInstance = new Swiper(swiperElement, {
-        // Speichere Instanz
         slidesPerView: 'auto',
         spaceBetween: 20,
         loop:
           products.length > 1 &&
-          products.length > (this.swiperInstance?.params.slidesPerView || parseInt(this.dataset.maxProducts, 10) || 4), // Sicherere Loop-Bedingung
+          products.length > (this.swiperInstance?.params.slidesPerView || parseInt(this.dataset.maxProducts, 10) || 4),
         navigation: {
           nextEl: '.swiper-button-next',
           prevEl: '.swiper-button-prev',
@@ -311,7 +283,6 @@ class RecentlyViewedProducts extends HTMLElement {
           1024: { slidesPerView: 4, spaceBetween: 50 },
         },
       });
-      // console.log('[RVP] renderProducts: Swiper initialisiert.', this.swiperInstance); // Kann entfernt werden
     } else if (typeof Swiper === 'undefined') {
       console.error(/* ... */);
       this.innerHTML = '<p>Error: Carousel library could not be loaded.</p>';
@@ -323,6 +294,5 @@ class RecentlyViewedProducts extends HTMLElement {
 }
 
 if (!customElements.get('recently-viewed-products')) {
-  // console.log('[RVP] Definiere Custom Element "recently-viewed-products".'); // Kann entfernt werden
   customElements.define('recently-viewed-products', RecentlyViewedProducts);
-} // else { console.log(...) } // Kann entfernt werden
+}
