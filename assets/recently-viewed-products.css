@@ -1,7 +1,6 @@
 recently-viewed-products {
     display: block;
     margin: 20px 0;
-    /* padding: 0 15px; */
 }
 
 .recently-viewed-products-swiper {
@@ -10,12 +9,10 @@ recently-viewed-products {
 }
 
 .recently-viewed-product-slide {
-    /* border: 1px solid #e0e0e0;
-    border-radius: 5px; */
     text-align: center;
     box-sizing: border-box;
     flex-shrink: 0;
-    /* Wichtig, damit Slides nicht schrumpfen */
+
 }
 
 .recently-viewed-product-content {
@@ -26,7 +23,6 @@ recently-viewed-products {
     max-width: 100%;
     height: auto;
     margin-bottom: 10px;
-    /* Check Größe!? */
 }
 
 .recently-viewed-product-image.placeholder-image {
@@ -48,13 +44,14 @@ recently-viewed-products {
 
 .swiper-button-prev,
 .swiper-button-next {
-    color: #000;
-    transform: translateY(-50%);
+    color: #3b373756;
+    transition: color 0.3s ease;
 }
 
-/* .swiper-pagination {
-    position: relative;
-} */
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
+    color: #000000 !important;
+}
 
 .swiper-pagination-bullet-active {
     background-color: #000;
